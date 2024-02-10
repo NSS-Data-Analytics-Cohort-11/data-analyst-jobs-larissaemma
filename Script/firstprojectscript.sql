@@ -25,9 +25,9 @@ WHERE location in ('TN','KY')
 
 SELECT count (star_rating)
 FROM data_analyst_jobs
-Where star_rating > 4.0
+Where location = 'TN' AND star_rating > 4.0
 
---answer: 416
+--answer: 3
 
 --5.How many postings in the dataset have a review count between 500 and 1000?
 
@@ -39,8 +39,9 @@ WHERE review_count between 500 and 1000
 
 --6.Show the average star rating for companies in each state. The output should show the state as state and the average rating for the state as avg_rating. Which state shows the highest average rating?
 
-SELECT location, avg(star_rating)
+SELECT location, avg(star_rating) as avg_rating
 FROM data_analyst_jobs
+WHERE star_rating IS NOT NULL
 GROUP BY Location
 ORDER BY avg(star_rating) desc
 
@@ -63,41 +64,64 @@ WHERE location = 'CA'
 
 --9.Find the name of each company and its average star rating for all companies that have more than 5000 reviews across all locations. How many companies are there with more that 5000 reviews across all locations?
 
-SELECT title, avg(star_rating)
+SELECT company, avg(star_rating) as avg_rating
 FROM data_analyst_jobs
 WHERE review_count > 5000
-GROUP BY title 
+AND company IS NOT NULL
+GROUP BY company 
 
---answer: 95
+--answer: 40
 
 --10.Add the code to order the query in #9 from highest to lowest average star rating. Which company with more than 5000 reviews across all locations in the dataset has the highest star rating? What is that rating?
 
-SELECT title, avg(star_rating)
+SELECT company, avg(star_rating)
 FROM data_analyst_jobs
-WHERE review_count > 5000
-GROUP BY title 
-ORDER BY avg(star_rating) desc
+WHERE company IS NOT NULL
+GROUP BY company 
+HAVING MIN(review_count) > 5000
+ORDER BY avg(star_rating) desc;
 
 
---answer: "Senior Data Analyst – Marketplace Analytics – Multiple Openi..."; 4.1999998090000000
+--answer: "General Motors","Unilever","Microsoft","Nike","American Express","Kaiser Permanente";4.1999998090000000
 
 
 --11.Find all the job titles that contain the word ‘Analyst’. How many different job titles are there?
 
-SELECT Count (title)
+SELECT DISTINCT (title)
 FROM data_analyst_jobs
-WHERE title like '%Analyst%'
+WHERE title ilike '%Analyst%'
 
---answer:1636
+--answer:774
 
 --12.How many different job titles do not contain either the word ‘Analyst’ or the word ‘Analytics’? What word do these positions have in common?
 
 SELECT COUNT(title)
 FROM data_analyst_jobs
-WHERE title not like'%Analyst%' and title not like  '%Analytics%'
+WHERE title not ilike'%Analyst%' and title not ilike  '%Analytics%'
 
 SELECT count (title)
 FROM data_analyst_jobs
-WHERE title not like '%Analy%' 
+WHERE title not ilike '%Analy%' 
 
---answer: 39; "Analy"
+--answer: 4; "Analy"
+
+--BONUS: You want to understand which jobs requiring SQL are hard to fill. Find the number of jobs by industry (domain) that require SQL and have been posted longer than 3 weeks.
+
+SELECT domain AS industry, count (*) as num_sql_jobs
+FROM (
+	SELECT *
+	FROM data_analyst_jobs
+	WHERE skill ILIKE '%SQL%'
+		AND days_since_posting >21) as sql_jobs
+GROUP BY industry
+HAVING domain IS NOT NULL
+ORDER BY num_sql_jobs DESC;
+--other way 
+
+SELECT domain, COUNT(title)
+FROM data_analyst_jobs
+WHERE skill ILIKE '%sql%'
+AND days_since_posting > (7*3)
+AND domain IS NOT NULL
+GROUP BY domain
+ORDER BY COUNT(title) DESC;
